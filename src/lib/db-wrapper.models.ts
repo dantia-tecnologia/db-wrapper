@@ -1,3 +1,4 @@
+
 export enum DataType {
     Integer = 'integer',
     Int = 'integer',
@@ -20,6 +21,29 @@ export enum DataType {
     Date = 'text'
 
 }
+
+export enum DefaultType {
+    Integer = '0',
+    Int = '0',
+    TinyInt = '0',
+    SmallInt = '0',
+    BigInt = '0',
+    Text = '\'\'',
+    Char = '\'\'',
+    NChar = '\'\'',
+    VarChar = '\'\'',
+    NVarChar = '\'\'',
+    CLOB = '\'\'',
+    BLOB = '0',
+    Real = '0.0',
+    Double = '0.0',
+    Decimal = '0.0',
+    Float = '0.0',
+    Boolean = '0',
+    DateTime = '(datetime(\'now\', \'localtime\'))',
+    Date = '(date(\'now\', \'localtime\'))'
+}
+
 
 export interface SqlTransaction {
     /**
@@ -90,7 +114,7 @@ export interface DBColumn {
     type: DataType;
     length?: number;
     isNullable?: boolean;
-    default?: string;
+    default?: DefaultType | string;
 }
 
 export interface DBTable {
@@ -112,3 +136,4 @@ export interface DBSchema {
     tables: DBTable[],
     views?: DBView[]
 }
+

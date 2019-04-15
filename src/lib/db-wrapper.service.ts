@@ -1,8 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { WindowService } from './window.service';
 import { DBTable, DbConfig, DBSchema, DBView,
-  DBColumn, DBUnique, DBForeign, SqlTransaction, SqlResultSet, SqlError } from './db-wrapper.models';
-
+  DBColumn, DBUnique, DBForeign, SqlTransaction, SqlResultSet, SqlError, DefaultType } from './db-wrapper.models';
 
 export class DbWrapperService {
   private _dbName: string;
@@ -17,7 +16,11 @@ export class DbWrapperService {
     this._location = dbConfig.location;
     this._iosDatabaseLocation = dbConfig.iosDatabaseLocation;
     this.init();
-    if (dbSchema) { this.generate(dbSchema); }
+    if (dbSchema) {
+      this.generate(dbSchema).catch(err => {
+        throw new Error( err.message);
+      });
+    }
   }
 
   init(): void {
@@ -35,7 +38,7 @@ export class DbWrapperService {
 
   generate(schema: DBSchema): Promise<any> {
 
-    let sentences = [];
+    const sentences = [];
     this.schema = schema;
 
     schema.tables.forEach(table => {
@@ -121,7 +124,7 @@ export class DbWrapperService {
             }, (transaction: SqlTransaction, error: SqlError) => {
                 reject(error);
             });
-        });
+        }, (err: SqlError) => reject(err) );
       } else {
         this.db.transaction((transaction: SqlTransaction) => {
             transaction.executeSql(query, bindings, (transaction: SqlTransaction, result: SqlResultSet) => {
@@ -129,7 +132,7 @@ export class DbWrapperService {
             }, (transaction: SqlTransaction, error: SqlError) => {
                 reject(error);
             });
-        });
+        }, (err: SqlError) => reject(err) );
       }
     });
   }
@@ -145,7 +148,7 @@ export class DbWrapperService {
 
     sql = sql + 'insert into ' + table + ' ';
 
-    for (let index in bindings) {
+    for (const index in bindings) {
        if (bindings.hasOwnProperty(index)) {
             sqlKeys.push(index);
             sqlValues.push(bindings[index]);
@@ -275,10 +278,10 @@ export class DbWrapperService {
       colSql +=  ' NOT NULL ';
     }
     if (col.default) {
-      colSql += ' DEFAULT ' + col.default;
+      colSql += ' DEFAULT ' + col.default + ' ';
     }
     if (col.type === 'text' && col.length) {
-      colSql += `CONSTRAINT ${col.name}_length CHECK ( `
+      colSql += `CONSTRAINT ${col.name}_length CHECK ( `;
       if (col.isNullable) {
         colSql += `${col.name} is null OR `;
       }
