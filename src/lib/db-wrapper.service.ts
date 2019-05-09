@@ -62,10 +62,10 @@ export class DbWrapperService {
     onConflictPrimary = 'on conflict fail';
 
     if (Array.isArray(table.primary) )  {
-      sentences.push ('CONSTRAINT identificador PRIMARY KEY (' + table.primary.join(',') + ') ' + onConflictPrimary );
+      sentences.push (' CONSTRAINT identificador PRIMARY KEY (' + table.primary.join(',') + ') ' + onConflictPrimary );
     }
     if (typeof table.primary === 'string')   {
-      sentences.push ('CONSTRAINT identificador PRIMARY KEY (' + table.primary + ') ' + onConflictPrimary );
+      sentences.push (' CONSTRAINT identificador PRIMARY KEY (' + table.primary + ') ' + onConflictPrimary );
     }
     if (table.uniques) {
       table.uniques.forEach( uniq => {
@@ -281,7 +281,7 @@ export class DbWrapperService {
       colSql += ' DEFAULT ' + col.default + ' ';
     }
     if (col.type === 'text' && col.length) {
-      colSql += `CONSTRAINT ${col.name}_length CHECK ( `;
+      colSql += ` CONSTRAINT ${col.name}_length CHECK ( `;
       if (col.isNullable) {
         colSql += `${col.name} is null OR `;
       }
