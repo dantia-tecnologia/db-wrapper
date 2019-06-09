@@ -13,8 +13,8 @@ export class DbWrapperService {
   constructor(dbConfig: DbConfig, dbSchema?: DBSchema) {
 
     this._dbName = dbConfig.dbName;
-    this._location = dbConfig.location;
-    this._iosDatabaseLocation = dbConfig.iosDatabaseLocation;
+    this._location = dbConfig.location || 'default';
+    this._iosDatabaseLocation = dbConfig.iosDatabaseLocation || 'Library';
     this.init();
     if (dbSchema) {
       this.generate(dbSchema).catch(err => {
