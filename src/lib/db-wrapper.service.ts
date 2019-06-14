@@ -218,7 +218,7 @@ export class DbWrapperService {
     });
   }
 
-  dropTable (tables: []): Promise<void> {
+  dropTable (tables: string[]): Promise<void> {
     let cont = 1;
 
     cont = tables.length;
