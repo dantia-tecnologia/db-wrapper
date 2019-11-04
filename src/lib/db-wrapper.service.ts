@@ -7,6 +7,7 @@ export class DbWrapperService {
   private _dbName: string;
   private _location: string;
   private _iosDatabaseLocation: string;
+  private _readyPromise: Promise<void>;
   schema: DBSchema;
   db: any;
 
@@ -15,25 +16,57 @@ export class DbWrapperService {
     this._dbName = dbConfig.dbName;
     this._location = dbConfig.location || 'default';
     this._iosDatabaseLocation = dbConfig.iosDatabaseLocation || 'Library';
-    this.init();
-    if (dbSchema) {
-      this.generate(dbSchema).catch(err => {
-        throw new Error( err.message);
-      });
-    }
+    const window = (new WindowService()).nativeWindow;
+    if (dbSchema) { this.schema = dbSchema; }
+    this._readyPromise = new Promise ( (resolve, reject) => {
+      if (typeof window.cordova === 'undefined') {
+        setTimeout( () => {
+          this.init(dbSchema).then ( () => resolve() ).catch ( (err) => reject(err) );
+        }, 500);
+      } else {
+        document.addEventListener('deviceready', () => {
+          console.log('dbWrapper: device ready.');
+          this.initDevice(dbSchema).then ( () => resolve() ).catch ( (err) => reject(err) );
+        });
+      }
+    });
   }
 
-  init(): void {
+  ready(): Promise<void> {
+    return this._readyPromise;
+  }
+
+  initDevice(dbSchema: DBSchema): Promise<void> {
     const window = (new WindowService()).nativeWindow;
-    if (typeof window.cordova === 'undefined') {
-        this.db = window.openDatabase(this._dbName, '1.0', 'database', -1);
-    } else {
-        this.db = window.sqlitePlugin.openDatabase({
-            name: this._dbName,
-            location: this._location,
-            androidLockWorkaround: 1
-        });
-    }
+    return new Promise( (resolve, reject) => {
+      this.db = window.sqlitePlugin.openDatabase({
+        name: this._dbName,
+        location: this._location,
+        androidLockWorkaround: 1
+      });
+
+      if (dbSchema) {
+        this.generate(dbSchema).catch(err => {
+          reject(err);
+        }).then(() => { resolve(); });
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  init(dbSchema: DBSchema): Promise<void> {
+    const window = (new WindowService()).nativeWindow;
+    return  new Promise ( (resolve, reject) => {
+      this.db = window.openDatabase(this._dbName, '1.0', 'database', -1);
+      if (dbSchema) {
+        this.generate(dbSchema).catch(err => {
+         reject(err);
+        }).then( () => { resolve(); });
+      } else {
+        resolve();
+      }
+    });
   }
 
   generate(schema: DBSchema): Promise<any> {
@@ -41,13 +74,18 @@ export class DbWrapperService {
     const sentences = [];
     this.schema = schema;
 
-    schema.tables.forEach(table => {
-      sentences.push(this.createTable(table));
-    });
+    if (schema.tables) {
+      schema.tables.forEach(table => {
+        sentences.push(this.createTable(table));
+      });
+    }
     if (schema.views) {
       schema.views.forEach( view => {
         sentences.push(this.createView(view));
       });
+    }
+    if (sentences.length === 0) {
+      throw new Error('Esquema de la base de datos vacia.');
     }
     return Promise.all(sentences);
   }
@@ -107,7 +145,7 @@ export class DbWrapperService {
 
   }
 
-  getUniquesTable(table: DBTable): Object {
+  getUniquesTable(table: DBTable): object {
     let res: {};
     table.uniques.forEach(uniq => {
       res[uniq.name] = uniq;
@@ -240,7 +278,7 @@ export class DbWrapperService {
     })
   }
 
-  fetchAll(result: SqlResultSet): Object[] {
+  fetchAll(result: SqlResultSet): object[] {
     let output = [];
 
     for (let i = 0; i < result.rows.length; i++) {
@@ -250,7 +288,7 @@ export class DbWrapperService {
     return output;
   }
 
-  fetch(result: SqlResultSet): Object {
+  fetch(result: SqlResultSet): object {
       let objeto = undefined, newObj= undefined;
       if (result.rows.length !== 0) {
           objeto = result.rows.item(0);
