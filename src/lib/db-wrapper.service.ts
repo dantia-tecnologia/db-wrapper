@@ -21,7 +21,13 @@ export class DbWrapperService {
     this._readyPromise = new Promise ( (resolve, reject) => {
       if (typeof window.cordova === 'undefined') {
         setTimeout( () => {
-          this.init(dbSchema).then ( () => resolve() ).catch ( (err) => reject(err) );
+          this.init(dbSchema).then (
+            () => {
+              resolve();
+            } )
+            .catch ( (err) => {
+              reject(err);
+            } );
         }, 500);
       } else {
         document.addEventListener('deviceready', () => {
@@ -62,7 +68,9 @@ export class DbWrapperService {
       if (dbSchema) {
         this.generate(dbSchema).catch(err => {
          reject(err);
-        }).then( () => { resolve(); });
+        }).then( () => {
+          resolve();
+        });
       } else {
         resolve();
       }
@@ -90,13 +98,22 @@ export class DbWrapperService {
     return Promise.all(sentences);
   }
 
-  createTable(table: DBTable): Promise<any> {
-    let sql = '', sentences = [], onConflictPrimary;
+  async createTable(table: DBTable): Promise<any> {
+    let sql = '',  onConflictPrimary;
+    const sentences = [],  newColumns = []
 
-    table.columns.forEach(col => {
-      sentences.push(this.defColumn(col));
-    });
-
+    const tableDDL = await this.tableExists(table.name);
+    if (tableDDL) {
+        table.columns.forEach( col => {
+          if (!this.columnExists(tableDDL as string, col.name) ) {
+            newColumns.push(this.addColumn(table.name, col));
+          }
+        });
+    } else {
+      table.columns.forEach( col => {
+        sentences.push(this.defColumn(col));
+      });
+    }
     onConflictPrimary = 'on conflict fail';
 
     if (Array.isArray(table.primary) )  {
@@ -117,9 +134,25 @@ export class DbWrapperService {
       });
     }
 
-    sql = 'CREATE TABLE IF NOT EXISTS ' + table.name + ' (' + sentences.join(',') +')';
+    if (tableDDL && newColumns.length !== 0) {
+      return Promise.all(newColumns)
+      .then( () => { console.log(`Table ${table.name} altered.`); } )
+      .catch( (err) => {
+        console.error (`Table ${table.name}: ${err.message}`);
+        throw new Error(`Table ${table.name}: ${err.message}`);
+      });
 
-    return this.query(sql);
+    } else if (!tableDDL) {
+      sql = 'CREATE TABLE IF NOT EXISTS ' + table.name + ' (' + sentences.join(',') + ')';
+      return this.query(sql)
+      .then( () => { console.log(`Table ${table.name} created.`); })
+      .catch( (err) => {
+        console.error (`Table ${table.name}: ${err.message}`);
+        throw new Error(`Table ${table.name}: ${err.message}`);
+      });
+    } else {
+      return Promise.resolve().then( () => { console.log(`Table ${table.name} initialized.`); });
+    }
   }
 
 
@@ -367,6 +400,25 @@ export class DbWrapperService {
     }
 
     return foreSql;
+  }
+
+  private tableExists(table: string): Promise<boolean | string> {
+    return this.query('select  sql from sqlite_master ' +
+        'where type=\'table\' and name=\'' + table + '\'')
+    .then(result => {
+        if (this.rowsCount(result) === 1) { return (this.fetch(result) as any).sql as string; } else { return false; }
+    });
+  }
+
+  private columnExists(tableDDL: string, column: string): boolean {
+
+    if (tableDDL.indexOf(column) === -1) { return false; } else {  return true; }
+  }
+
+  private addColumn(table: string, col: DBColumn): Promise<any> {
+    const colSql = this.defColumn(col);
+    const query = 'alter TABLE ' + table + ' add COLUMN ' + colSql;
+    return this.query(query);
   }
 
 }
