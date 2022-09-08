@@ -102,10 +102,10 @@ export class DbWrapperService {
     let sql = '',  onConflictPrimary;
     const sentences = [],  newColumns = []
 
-    const tableDDL = await this.tableExists(table.name);
+    const tableDDL = await this._tableExists(table.name);
     if (tableDDL) {
         table.columns.forEach( col => {
-          if (!this.columnExists(tableDDL as string, col.name) ) {
+          if (!this._columnExists(tableDDL as string, col.name) ) {
             newColumns.push(this.addColumn(table.name, col));
           }
         });
@@ -339,6 +339,21 @@ export class DbWrapperService {
       return result.rows.length;
   }
 
+  tableExists(table: string): Promise<boolean> {
+    return this.query('select  sql from sqlite_master ' +
+        'where type=\'table\' and name=\'' + table + '\'')
+    .then(result =>  (this.rowsCount(result) === 1) );
+  }  
+
+  columnExists(table: string, column: string): Promise<boolean> {
+    return this._tableExists(table)
+      .then((tableDDL) => {
+        if (tableDDL) {
+          return this._columnExists((tableDDL as string), column);
+        } else { return false; }
+      });
+  }
+
 /* Private */
 
   private defColumn(col: DBColumn): string {
@@ -402,7 +417,7 @@ export class DbWrapperService {
     return foreSql;
   }
 
-  private tableExists(table: string): Promise<boolean | string> {
+  private _tableExists(table: string): Promise<boolean | string> {
     return this.query('select  sql from sqlite_master ' +
         'where type=\'table\' and name=\'' + table + '\'')
     .then(result => {
@@ -410,7 +425,7 @@ export class DbWrapperService {
     });
   }
 
-  private columnExists(tableDDL: string, column: string): boolean {
+  private _columnExists(tableDDL: string, column: string): boolean {
 
     if (tableDDL.indexOf(column) === -1) { return false; } else {  return true; }
   }
