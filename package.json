@@ -1,8 +1,8 @@
 {
   "name": "db-wrapper",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "peerDependencies": {
-    "@angular/common": "^7.2.0",
-    "@angular/core": "^7.2.0"
+    "@angular/common": "^9.1.0",
+    "@angular/core": "^9.1.0"
   }
 }
