@@ -1,11 +1,11 @@
 {
   "name": "db-wrapper",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "peerDependencies": {
     "@angular/common": "^15.0.0",
     "@angular/core": "^15.0.0"
   },
   "dependencies": {
-    "tslib":  "^2.0.0"
+    "tslib": "^2.0.0"
   }
 }
