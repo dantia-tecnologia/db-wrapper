@@ -1,9 +1,9 @@
 {
   "name": "db-wrapper",
-  "version": "1.0.0",
+  "version": "0.0.8",
   "peerDependencies": {
-    "@angular/common": "^9.1.13",
-    "@angular/core": "^9.1.13"
+    "@angular/common": "^15.0.0",
+    "@angular/core": "^15.0.0"
   },
   "dependencies": {
     "tslib":  "^2.0.0"
