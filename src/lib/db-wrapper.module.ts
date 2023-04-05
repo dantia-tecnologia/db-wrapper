@@ -4,7 +4,7 @@ import { DB_CONFIG, provideDbWrapper, DbWrapperService, DB_SCHEMA } from './db-w
 
 @NgModule()
 export class DbWrapperModule {
-  static forRoot(dbConfig: DbConfig, schema?: DBSchema): ModuleWithProviders {
+  static forRoot(dbConfig: DbConfig, schema?: DBSchema): ModuleWithProviders<DbWrapperModule>{
     return {
       ngModule: DbWrapperModule,
       providers: [

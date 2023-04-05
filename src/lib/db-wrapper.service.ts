@@ -343,7 +343,7 @@ export class DbWrapperService {
     return this.query('select  sql from sqlite_master ' +
         'where type=\'table\' and name=\'' + table + '\'')
     .then(result =>  (this.rowsCount(result) === 1) );
-  }  
+  }
 
   columnExists(table: string, column: string): Promise<boolean> {
     return this._tableExists(table)
