@@ -7,6 +7,7 @@ export class DbWrapperService {
   private _dbName: string;
   private _location: string;
   private _iosDatabaseLocation: string;
+  private _androidDatabaseProvider: string;
   private _readyPromise: Promise<void>;
   schema: DBSchema;
   db: any;
@@ -16,6 +17,7 @@ export class DbWrapperService {
     this._dbName = dbConfig.dbName;
     this._location = dbConfig.location || 'default';
     this._iosDatabaseLocation = dbConfig.iosDatabaseLocation || 'Library';
+    this._androidDatabaseProvider = dbConfig.androidDatabaseProvider || 'default';
     const window = (new WindowService()).nativeWindow;
     if (dbSchema) { this.schema = dbSchema; }
     this._readyPromise = new Promise ( (resolve, reject) => {
@@ -48,7 +50,8 @@ export class DbWrapperService {
       this.db = window.sqlitePlugin.openDatabase({
         name: this._dbName,
         location: this._location,
-        androidLockWorkaround: 1
+        androidLockWorkaround: 1,
+        androidDatabaseProvider: this._androidDatabaseProvider,
       });
 
       if (dbSchema) {

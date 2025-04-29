@@ -91,6 +91,10 @@ export interface DbConfig {
      * default 'Library'
     */
     iosDatabaseLocation?: string;
+    /**
+     * default 'default'
+    */    
+    androidDatabaseProvider?: string;
 }
 
 /**
